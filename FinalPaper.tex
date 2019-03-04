@@ -1,0 +1,256 @@
+\documentclass[11pt]{article}
+\usepackage{indentfirst}
+\usepackage{graphicx}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\newtheorem*{theorem}{Theorem}
+\usepackage[margin=1.45in]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\F}{\mathbb{F}}
+\newcommand{\Q}{\mathbb{Q}}
+
+\title{Error Correcting Codes in Coding Theory \\
+\large{with a closer look at Reed-Solomon codes}}
+\date{April 25, 2017}
+\author{Augustine Calvino}
+
+\begin{document}
+\begin{titlepage}
+	\centering
+	\includegraphics[width=0.265\textwidth]{BC_logo.png}\par
+	\vspace{1cm}
+	{\scshape\LARGE Benedictine College \par}
+	\vspace{1.5cm}
+	{\huge\bfseries An Introduction to Coding Theory \par}
+	{\LARGE with Reed-Solomon Codes as a Real-World Example \par}
+	\vspace{1cm}
+	{\large \today\par}
+	\vspace{1.5cm}
+	{\Large\itshape Augustine Calvino \par}
+	\vspace{.5cm}
+	supervised by\par
+	Dr. Nickolas Hein
+	\vspace{1.5cm}
+	
+	\thispagestyle{empty}
+	\begin{abstract}
+	Communication of data is ubiquitous in today's world. Whether within a device or between devices, reliable data transfer is essential to proper function of the databases, applications, servers, and computers that comprise today's technological systems. Errors, however, do occur. They must be corrected. And math can help.
+	
+	Here we present an introduction to \textit{coding theory}. We will use Reed-Solomon Codes as a real-world example demonstrating some of its fundamental principles. 
+	\end{abstract}
+	\vfill
+\end{titlepage}
+\clearpage
+
+\section{Introduction}
+
+The term \textbf{Coding Theory} is loosely used to describe any mathematical methods of manipulating data, including cryptography and data compression, but it has come to refer primarily to the study of error correcting codes. For the rest of this paper, this is what we mean by any references to `codes' or `coding theory.' This study contrasts with cryptography in that while cryptography aims to make data undecodable (to unintended recipients), the aim of coding theory is to make data intelligible despite interference. It contrasts with data compression in that while data compression compacts data by eliminating redundancy, coding theory makes data bigger by adding redundancy. \cite[1]{introtocoding} Like cryptography and data compression, coding theory is used in the contexts of data storage and transmission.
+
+The need for reliable transmission of data is rapidly increasing as the number of types of technological systems in use escalates. Watches, phones, radios, tablets, speaker systems, computers, cars, satellites, and routers must communicate with each other over various channels ranging from a few feet to thousands of miles. Sometimes these channels have the assistance of wires, but sometimes they do not. Data transmission also occurs within devices, such as computer systems busing information between the hard drive, main memory, CPU, keyboard, and CD reader. Some data transmission is by humans directly, such as typing products into an on-line catalog or database.
+
+But just as how in a loud room you may mishear what your friend is saying due to the \emph{noise}, various real-world factors can disrupt the integrity (accuracy) of data. Incidentally, we use the same term, \textbf{noise}, to describe the interference that occurs on data. In the case of wi-fi, such interference may be frequencies emitted by a microwave; in the case of satellites, it may be a cloud in the sky; in the case of a CD reader it may be scratches or dust on the CD; and in the case of a human it may just be sloppy typing fingers. Due to these and other factors, transmission cannot be guaranteed to proceed without error.
+
+Consequently, a whole branch of Mathematics and Theoretical Computer Science has been developed to deal with this issue effectively and efficiently.
+
+\section{Background}
+
+To understand the motivation and terminology behind this study, let us return to the example of a noisy room. Consider such circumstances under which you hear your friend say ``H\u{a}-foo seen my ---llet?'' where the dashes represent muffled sounds that were covered up by a shout in the room. Immediately you can detect an error simply from the fact that the sounds `H\u{a}-foo' do not form a word in your vocabulary. In considering the sounds, however, you easily recognize them as being similar to the sounds `Have you' and interpret them as such. Similarly, though you didn't catch the whole of the last word, in considering the words you know that end in `-llet,' and perhaps some other context (such as a wallet sitting on the table in front of you), you correctly interpret the complete phrase as ``Have you seen my wallet?''
+
+In coding theory the set of possible symbols from which a message can be comprised is called the \textbf{alphabet} (denoted $A$), and is analogous to the set of possible sounds in the previous example. Sequences of symbols from $A$ are elements of the set $A^{*}$ (or $A^{n}$ for sequences of a specific length $n$) and are called \textbf{strings}. They correspond to combinations of sounds. Just as words are valid combinations of sounds in a vocabulary, \textbf{codewords} $c$ are valid strings in a \textbf{code} $C$. This of course suggests that there are non-valid combinations of sounds in a vocabulary and that not every string in $A^{n}$ is also in $C$. In other words, $C\subset A^{n}$, where $n$ is the \textbf{length} of the code. When a string $s$ is received such that $s\notin C$, we detect that at least one symbol of that string is an \textbf{error}, just as you knew at least one sound in `H\u{a}-foo' was heard in error because it is not a word. Sometimes, due to the way hardware works, we can know it pretty likely that a specific symbol is in error and treat it as a dropped symbol, or \textbf{erasure} in the received string. This correlates to how a shout created enough disruption in the communication channel to cause you to regard the first sounds of `wallet' as missing rather than being `brace-' or `in-.' Erasures are actually preferable to errors because they tell us with which character in a string an error occurred. Given knowledge of errors and erasures, we can often correct a string to the codeword $c$ that is most similar.
+
+For example, let $A = \{0-9,a-z,A-Z\}$, the set of legal symbols to use in a certain password. If the password must be eight characters and contain at least one of each type, then $C$ is a subset of $A^{8}$, and it consists of all codewords $c$ that fulfill the above condition. One possible such codeword would be $I8tb4uop$, and if it was received from transmission as $i8tb4uop$, we could detect that the string is not a codeword because it has no upper-case letter. In other words, we detect an error. Although error correction will rarely, if ever, be used on passwords, this demonstrates how a code is a subset of the possible strings over an alphabet.
+
+In some sense, these examples demonstrate the inefficiency of data encoding and language. That is, a code of just as many elements could be generated using fewer symbols per codeword and a language of just as many words could be generated using fewer sounds per word. Returning to the password example, we could use every possible combination of symbols from the alphabet and not restrict the criteria for a valid password to generate just as many passwords as in the previous example, while needing fewer than eight characters. In the case of language, we could shorten the length of words by designating meaning to syllables like `bu' or `ek' before having words like `compartmentalization' in our vocabulary. Now, that is not the way language develops, but these example demonstrate the way that the length of the medium used to convey an idea (or password) is often longer than the minimum possible length of the idea expressed by that message.
+
+In coding theory we actually intentionally lengthen our initial information by adding data symbols to the end or by systematically manipulating the data string to something wholly different and longer. Just as the function $y=2x$ transforms elements of $\Z$ to elements of $2\Z$ (the even integers), coding theory transforms information from the set of possible data strings to elements of $C$. This functional transformation is also known as \textbf{mapping}, and the rule which governs it is a \textbf{mapping function}. The length of the data before mapping it to the code is typically denoted $k$, the length of the code is typically denoted $n$, and a code that is designed around such a transformation is denoted \textbf{$C(n,k)$}. The difference in length that this process adds without adding new information is known as \textbf{redundancy}.
+
+This lengthening of the data, however, is exactly what enables us to detect and correct errors. Recall the example where you correctly interpreted what you misheard from your friend. If all sound combinations had meaning, you would never even have realized that you misheard your friend. Similarly, if all strings were codewords, we could never detect an error, much less correct one. A typical way of correcting is to find the codeword with the least difference from the received string. This amount of difference between particular codewords, measured simply as the number of symbols which differ between them, is called the \textbf{distance}, and for a code $C$, the least distance that exists between distinct elements of $C$ is the \textbf{minimum distance} $d_{min}$. If the number of errors that occur on a codeword is not less than $d_{min}$, there is a risk that the received string is another codeword and that the error will not be detected. Similarly, if the number of errors is not less than $\dfrac{d_{min}}{2}$, the received string may be more similar to a different codeword than the one it is supposed to be, and correction techniques will not be effective. Hence (as shown in \cite[2]{afcicodingtheory}), a code can correct up to $t$ errors, where
+\begin{equation} \label{ecc}
+t \le \lfloor\dfrac{d_{min}-1}{2}\rfloor.
+\end{equation}
+For these reasons, a good code will have a large minimum distance relative to the amount of redundancy. The ratio of a code's error correcting and detecting capability to the amount of redundancy is its \textbf{efficiency}.
+
+For example, let $A=\{1,2,3\}$, $C=\{1231,1312,2132,3113,2223,3321\}\subset A^{4}$, and $a,b\in C$. For $a=1231$ and $b=3113$, the distance $dist(a,b)=4$ because every corresponding symbol differs between those codewords. The minimum distance of this code is $d_{min}(C)=3$ because any pair of codewords have at least three symbols which differ. If $b$ was received with one symbol error as $b'=3123$, we could successfully correct it to the most similar codeword. If two symbol errors occurred such that $b'=3323$, the most similar codeword would be $3321$, not $3113$, and error correction would fail. This reflects that the max number of errors this code can handle is $\lfloor\dfrac{d_{min}-1}{2}\rfloor=\lfloor\dfrac{3-1}{2}\rfloor=1$.
+
+\section{Abstract Algebra Background}
+
+Coding Theory builds heavily upon abstract algebra. Consequently, this section gives the mathematical background necessary to understand certain abstract structures sufficiently for this introductory paper. See \cite[45-60] {codesandcurves} for more review.
+
+\subsection{Fields}
+
+Consider the sets $\R,\C,\text{ and }\Q$ which have the usual arithmetic properties of addition, subtraction, multiplication and division. \textbf{Fields} are simply a generalization from sets with these properties. The formal set of properties for a field $\F$ is as follows.
+\begin{itemize}
+\item Existence of Additive Identity: There is an element $0\in\F$ such that $0+a=a=a+0$ for all $a\in\F$.
+\item Existence of Additive Inverses: For all $a\in\F$, there is an element $b\in\F$ such that $a+b=0=b+a$.
+\item Commutativity of Addition: For all $a,b\in\F$, we have $a+b=b+a$.
+\item Associativity of Addition: For all $a,b,c\in\F$, we have $(a+b)+c=a+(b+c)$.
+\item Existence of Multiplicative Identity: There is an element $1\in\F$ such that $1a=a=a1$ for all $a\in\F$.
+\item Existence of Multiplicative Inverses: For all $a\in\F\ \{0\}$, there is an element $b\in\F$ such that $ab=1=ba$.
+\item Commutativity of Multiplication: For all $a,b\in\F$, we have $ab=ba$.
+\item Associativity of Multiplication: For all $a,b,c\in\F$, we have $(ab)c=a(bc)$.
+\item Distributive Laws: For all $a,b,c\in\F$, we have $a(b+c)=ab+ac$ and $(a+b)c=ac+bc$.
+\end{itemize}
+Note that $\Z$ is not a field because it lacks existence of multiplicative inverses. That is, for $5\in\Z$, there is no $b\in\Z$ such that $5b=1$. Some less familiar fields which can be shown to possess all these properties are $\Q(x)$ (the set of ratios of polynomials with coefficients in $\Q$) and $n\times n$ diagonal matrices with entries from $\Q$.
+
+\subsection{Finite Fields}
+
+A \textbf{finite field} is simply a field with a finite number of elements. The simplest example of this is the integers modulo a prime $p$, represented $\Z/p\Z$ or $\F_{p}$. This set can be represented as the numbers $0\text{ through }p-1$.
+
+The arithmetic operations of such fields work by `wrapping around.' For example, adding $1$ to $p-1$ results in $0$, and subtracting $1$ from $0$ results in $p-1$. In general, for a result $r$ from an arithmetic operation in $\Z$, the result of that operation in $\F_{p}$ is the remainder of $\dfrac{r}{p}$. So while $4+3=7$ in $\Z$, $4+3=2$ in $\F_{5}$ because $remainder(\dfrac{r}{p})=remainder(\dfrac{7}{5})=2$. Formally, we write this $7\equiv2\text{ \textbf{mod} }5$. Similarly, while $4\cdot4=16$ in $\Z$, $4\cdot4=1$ in $\F_{5}$ because $16\equiv1\text{ mod }5$.
+
+A slightly more complex finite field is the set of polynomials of degree less than some $d$ with coefficients in some $\F_{p}$. There are $p^{d}$ elements because each of the $d$ coefficients can take on one of $p$ values. Consequently, this field is represented $\F_{p^{d}}$. As an example, let us consider $\F_{2^{4}}$ which contains elements such as $a=x^{3}+x^{2}+1$ and $b=x^{2}+x$. Addition occurs coefficient-wise, so the sum of these two elements would be $x^{3}+x+1$. Note that addition of the $x^{2}$ coefficient resulted in a `wrapped around' result because it was reduced to its equivalent modulo $2$. Results of multiplication are also modularly reduced to keep the degree less than $d$, but by reduction modulo a fixed irreducible polynomial that degree. An \textbf{irreducible polynomial} is a non-constant polynomial that cannot be factored into the product of two non-constant polynomials. In $\F_{2^{4}}$, one such polynomial is $x^{4}+x+1$. Using $a\cdot b$ as an example of this reduction, we have
+\begin{align*}
+&&(x^{3}+x^{2}+1)(x^{2}+x)=x^{5}+x^{3}+x^{2}+x&\equiv\underline{x^{3}}\text{ mod }(x^{4}+x+1)\\
+\text{because }&&x^{5}+x^{3}+x^{2}+x&=\underline{x^{3}}+(x)(x^{4}+x+1).
+\end{align*}
+
+We will see an example of a code that takes its symbols from the field $\F_{2^{m}}$. In such real-world cases, transmitting the full polynomials would be terribly inefficient, so we abbreviate them to their coefficient lists and \textit{interpret} them as polynomials. Thus $x^{3}+x^{2}+1$ becomes $1101$ and $x^{2}+x$ becomes $0110$.
+
+\subsection{Vector Spaces}
+
+A \textbf{vector space} is a set closed under vector addition and scalar multiplication. Each element of the vector space is called a \textbf{vector}, and is typically represented as a list of \textbf{coordinates}, usually enclosed by brackets or parenthesis. Each of these coordinates is a member of the field over which multiplication is defined. For example, the real vector space of dimension $n$, denoted $\R^{n}$, has elements $(.3,0)$ for $n=2$ and $(-5,\sqrt{2},0,1)$ for $n=4$.
+
+A \textbf{linear subspace} is simply subset of a vector space which is still a vector space. It must contain the zero vector $\textbf{0}$ and be closed under addition and scalar multiplication. A subspace of $\R^{3}$ (three-dimensional real space) would be a plane going through the origin, such as $\{(x,y,0)\text{ for all }x,y\in\R\}$.
+
+Every codeword and data string is a vector-like structure in that its symbols serve as coordinates of the larger object. However, because a code need not be algebraic (if its alphabet was $\{a-z\}$, addition would not really be defined), it is not necessarily a vector space. When the alphabet of a code is a field $\F$ and the code is closed under addition and multiplication by a constant, the code is a vector space and we call it a \textbf{linear code}. In this case, $C$ is not just a subset of $A^{n}$, but a subspace of $A^{n}$. Throughout the rest of this paper, codewords and data strings will often be represented as vectors or vector-like structures $v=(v_{0},v_{1},...)$, where the coordinates $v_{i}$ are the letters, digits, or symbols that comprise the strings.
+
+\section{Codes}
+
+We now turn back to codes, and examine a few examples of how these mathematical techniques can be used for error detection and correction.
+
+\subsection{Repetition}
+
+The r-Repetition Codes are a simple but terribly inefficient set of codes used mostly for explanatory purposes. For initial data string $d=d_{0}d_{1}...d_{n-1}$ over $A^{n}$ where $A$ is a field, the codeword $c=c_{0}c_{1}...c_{n\cdot r-1}$ is defined as $d$ repeated $r$ times. For example, for $r=3, A=\F_{2},\text{ and }d=1011, c=1011\; 1011\; 1011$. The length of the data is $k=4$, so the code $C$ has length $n=k\cdot r=12$. It is the set of twelve digit binary strings c such that each section is identical: $c_{0}c_{1}c_{2}c_{3}=c_{4}c_{5}c_{6}c_{7}=c_{8}c_{9}c_{10}c_{11}$. Let a \textit{position} be the set of places relative to a section. For example, the underlined places in $c=10\underline{1}1\; 10\underline{1}1\; 10\underline{1}1$ represent the third position. Because changing one codeword to another requires changing every digit in a given position, $d_{min}=r$. This means that if less than $r$ errors occur within a given position, we can detect the error. If less than $\dfrac{r}{2}$ errors occur in a given position, then over half the elements in that position will still be correct and a majority vote will determine what the correct value should be for all elements in that position. In other words, this code can correct up to $\lfloor\dfrac{r-1}{2}\rfloor$ errors. This corresponds with (\ref{ecc}) because $r=d_{min}$. We can tell that the repetition code is linear because
+\begin{itemize}
+\item {the zero vector consists of identical, repeated sections, and is therefore in the code,}
+\item {the alphabet $A$ is a field,}
+\item {and adding two codewords together or multiplying a codeword by a constant from $A$ results in a vector which also has identical sections, and is therefore a member of the code.}
+\end{itemize}
+Recall that because the list of digits that comprise a codeword are mathematically being treated as elements of the vector space $\F_{2}$, addition and multiplication do not carry to the next digit, but wrap around to zero. Repetition codes, while able to correct an arbitrary number of errors by repeating more times, are too inefficient for much actual use because they require adding $2k$ data symbols to guarantee correction of an arbitrary error. \cite[2]{codesandcurves}
+
+\subsection{ISBN-10}
+
+Found on the back of any book, the International Standard Book Number (ISBN) is used to uniquely identify books around the world. We are going to focus on the ISBN-10 code. As might be guessed, it consists of ten-symbol codewords, $c_{1}c_{2}c_{3}c_{4}c_{5}c_{6}c_{7}c_{8}c_{9}c_{10}$. The first nine symbols are regular digits and are actually enough to identify a book, while the tenth is a redundant check symbol from $\{0-9,X\}$. It is computed as a weighted sum:
+\[\text{Let }c_{10}' \equiv c_{1}+2c_{2}+...+9c_{9}\text{ mod }11.\]
+\[
+\text{Then }c_{10} =
+  \begin{cases}
+  c_{10}', & c_{10}'<10\text{ mod }11 \\
+  X, & c_{10}'\equiv10\text{ mod }11
+  \end{cases}
+.
+\]
+For example, if the first nine digits are $123456789$, $c_{10}' \equiv 285 \equiv 10\text{ mod }11$, and $c_{10}=X$. If the first nine digits are $987654321$, $c_{10}' \equiv 165 \equiv 0\text{ mod }11$, and $c_{10}=0$. This code is not a vector space because the elements do not admit multiplication by members of a field (the first nine values are from a different set than the last), so the code is not linear.
+
+This code has the ability to detect all single digit and transposition errors, that is, all cases where one digit is mistyped or two digits are typed in transposed order. It does not offer the ability to correct errors. Rather, its strength lies in how, with only one redundant digit and a simple encoding scheme, it can detect all the most common errors. \cite[4]{codesandcurves}
+
+\subsection{Reed-Solomon Codes}
+
+Some particular applications which use Reed-Solomon codes are DVD's, CD's, barcodes, cell phones, satellite communications, digital television, and high speed modems. \cite{reedsolomoncodes} Denoted $RS(n,k)$ for codewords of length $n$ derived from initial data of length $k$, they are non-binary, linear codes over some alphabet $A = \F_{2^{m}}$. Non-binary means that although it is used in electronic contexts where all data is a string of \textbf{bits} (ones and zeros), each `character' or `symbol' in a data string or codeword is not just a bit, but a grouping of $m$ bits. Because grouping eight bits into a \textbf{byte} is standard in computer science, $m=8$ would be a logical choice for many applications. Examples of such symbols in $\F_{2^{m}}$ are $101$ for $m=3$ and $11011001$ for $m=8$. Recall that because these are elements of a field, these values are not decimal numbers or binary values. That is, $101 \in \F_{2^{3}}$ is not one hundred one, nor is it the binary value equivalent to five. More accurately, it represents the polynomial $1\cdot x^{2} + 0\cdot x + 1$, where the coefficients are elements of $\F_{2}$ and multiplication over $x$ will `wrap around' by reduction modulo a fixed irreducible polynomial of degree $3$.
+
+Consider the data string $d=(d_{0},d_{1},...,d_{k-1})$ of length $k$. Note that each of these symbols $d_{i}$ in the data string is not a single digit, but an element of $\F_{2^{m}}$, and therefore has a multi-digit representation (i.e. `$101$'). Define
+\[F(x)=d_{0}+d_{1}\cdot x+...+d_{k-1}\cdot x^{k-1},\text{ with } x \in \F_{2^{m}}.\]
+The codeword corresponding to $d$ is \[c=(c_{0},c_{1},...,c_{n-1})=(F(0),F(\alpha),F(\alpha^{2}),...,F(\alpha^{n-1}))\]
+where $0,\alpha,\alpha^{2},...,\alpha^{n-1}$ are $n$ elements of $\F_{2^{m}}$. By taking the equation associated with a coordinate of the codeword for each coordinate, we can form the system
+\begin{align*}
+F(0) &= d_{0}\\
+F(\alpha) &= d_{0} + d_{1}\cdot\alpha + d_{2}\cdot\alpha^{2} + ... + d_{k-1}\cdot\alpha^{k-1}\\
+F(\alpha^{2}) &= d_{0} + d_{1}\cdot\alpha^{2} + d_{2}\cdot\alpha^{2\cdot2} + ... + d_{k-1}\cdot\alpha^{2(k-1)}\\
+&\vdots\\
+F(\alpha^{n-1}) &= d_{0} + d_{1}\cdot\alpha^{n-1} + d_{2}\cdot\alpha^{2(n-1)} + ... + d_{k-1}\cdot\alpha^{(n-1)(k-1)}.
+\end{align*}
+This gives us a system of $n$ equations in $k$ variables (solving for the $d_{i}$'s), but $n>k$, so the system is over-determined. This means that we can select a subset of $k$ of these equations and still solve for $d$, as long as the coefficient matrix determined by those equations is nonsingular (invertible). Luckily, it has been proved that any selection of $k$ equations from this set always generates such a matrix. Putting this system in matrix form we have $Md=c$ with solution $d=M^{-1}c$. Taking the first $k$ equations as an example, we have
+\begin{align*}
+\begin{bmatrix}
+1 & 0 & 0 & \dotsc & 0 \\
+1 & \alpha & \alpha^{2} & \dotsc & \alpha^{k-1} \\
+1 & \alpha^{2} & \alpha^{2\cdot2} & \dotsc & \alpha^{2(k-1)} \\
+\vdots & \vdots & \vdots & \ddots & \vdots \\
+1 & \alpha^{k-1} & \alpha^{2(k-1)} & \dotsc & \alpha^{(k-1)(k-1)} 
+\end{bmatrix}
+\begin{bmatrix}
+d_{0}\\
+d_{1}\\
+d_{2}\\
+\vdots\\
+d_{k-1}
+\end{bmatrix}
+=
+\begin{bmatrix}
+F(0)\\
+F(\alpha)\\
+F(\alpha^{2})\\
+\vdots\\
+F(\alpha^{k-1})
+\end{bmatrix}
+=
+\begin{bmatrix}
+c_{0}\\
+c_{1}\\
+c_{2}\\
+\vdots\\
+c_{k-1}
+\end{bmatrix}.
+\end{align*}
+This example uses only the first $k$ symbols from the codeword to generate an equation which is solvable for the original data string.
+\cite[257-260]{ascodingtheory}
+
+Now, when errors or erasures occur, they correspond to symbols of the codeword being wrong or missing, respectively. This means that any system which includes the missing or erroneous symbol $c_{i}$ in its $c$ vector will fail to correctly decode what $d$ is. So just how many errors and erasures can occur before this method will fail?
+
+\begin{theorem}
+Reed-Solomon Codes can correct $t$ errors and $v$ erasures as long as\\$2t+v\le n-k$.
+\end{theorem}
+\begin{proof}
+As long as more systems decode to $d$ than any other single data string, we can take a majority vote to successfully determine the correct data string. This will be the case when the erroneous codeword is closer to (has a smaller distance from) the original codeword than any other $c\in C$. This suggests making use of (\ref{ecc}). We would rather not check every pair of codewords to determine the minimum distance, so instead we will use the code's algebraic properties. Because $RS(n,k)$ is a linear code, for $a,b\in C$ we know also that $a-b\in C$. Because identical corresponding symbols will cancel to zero in the subtraction,
+\[dist(a,b)=dist(a-b,\textbf{0})=weight(a-b).\]
+So the minimum distance between every pair of codewords equals the weight of some other codeword. This simplifies the problem because now we only need to find the minimum weight of $C$, that is, the least number of non-zero coordinates in a codeword. Now the generator polynomial for the $c_{i}$'s, $F(x)=d_{0}+d_{1}\cdot x+...+d_{k-1}\cdot x^{k-1}$, has degree of at most $k-1$, and therefore has at most $k-1$ roots. So the codeword $(F(0),F(\alpha),F(\alpha^{2}),...,F(\alpha^{n-1}))$ has at most $k-1$ coordinates which are zero. \cite[2]{introductiontocodingtheory} Thus at least $n-(k-1)=n-k+1$ coordinates are non-zero, which means \[weight_{min}(RS(n,k))=d_{min}(RS(n,k))\ge n-k+1.\]
+Plugging this into (\ref{ecc}) yields \[t\le\lfloor\dfrac{n-k+1-1}{2}\rfloor=\lfloor\dfrac{n-k}{2}\rfloor\implies 2t\le n-k.\]
+When $v$ erasures occur, up to $v$ of the non-zero coordinates are erased, thereby decreasing the effective minimum weight and distance. Consequently, for a system with $v$ erasures, we adjust our previous equation by replacing $n$ with $n-v$:
+\[2t\le n-v-k\implies2t-v\le n-k.\]
+This gives the maximum number of errors and erasures that can occur such that $RS(n,k)$ can still properly decode.
+\end{proof}
+
+Now the method of correcting by decoding all possible systems and comparing the results, while mathematically sound, is temporally inefficient.  It turns out to be the simpler way of understanding the code, but know that in practice, there is a different, more efficient way of doing this \cite[262]{ascodingtheory}.
+
+The fact that $RS(n,k)$ has minimum distance $n-k+1$ is actually optimal in a way. \cite[261]{ascodingtheory} 
+That is, relative to fixed values of $n$ and $k$, it is impossible to design a code with a smaller $d_{min}$. This makes Reed-Solomon codes a good choice for many applications. In particular, consider circumstances where \textbf{burst error}, that is, high noise occurring over several successive data bits, occurs. Because any number of error bits within a symbol of $\F_{2^{m}}$ will only count as one error, Reed-Solomon codes are particularly suited for these situations. On the other hand, a single bit of a symbol being wrong means the whole $m$-bit symbol is erroneous. So while Reed-Solomon codes are optimal at their symbol-wise error correction rate, they are not optimal from a bit-wise perspective.  This makes Reed-Solomon codes a bad choice for other applications.
+
+\section{Conclusion} 
+
+Thus, while they are a good example and are widespread, Reed-Solomon codes remain only one of the many codes in use. Some of the other codes may be used because they are more efficient at correcting certain error patterns, just as Reed-Solomon codes are efficient for burst errors. Other codes may be preferable because the simplicity of their underlying algorithms makes them faster to encode and decode. We saw that ISBN codes are one case where a simple algorithm is preferable and good enough. Sometimes different codes are layered on top of one another to correct a combination of error patterns well, or to balance simplicity with efficiency. Whatever code or codes are used, the mathematics beneath is what is responsible for the integrity of the data transfer.
+
+\newpage
+\begin{thebibliography}{5}
+
+\bibitem[C]{introtocoding}
+Kenyon College. ``Introduction to Coding.'' Accessed April 17, 2017. http://www2.kenyon.edu/Depts/Math/Aydin/Teach/Fall06/328/Intro.pdf.
+
+\bibitem[G]{introductiontocodingtheory}
+Venkatesan Guruswami. ``Reed-Solomon, BCH, Reed-Muller, and concatenated codes'' Accessed April 17, 2017.\\
+https://www.cs.cmu.edu/$\sim$venkatg/teaching/codingtheory/notes/notes6.pdf.
+
+\bibitem[H]{afcicodingtheory}
+Raymond Hill.
+\textit{A First Course in Coding Theory}. New York: Oxford University Press, 1991.
+
+\bibitem[KK]{ascodingtheory}
+Dave K. Kythe and Prem K. Kythe.
+\textit{Algebraic and Stochastic Coding Theory}. Boca Raton: CRC Press, 2012.
+
+\bibitem[RR]{reedsolomoncodes}
+Martyn Riley and Iain Richardson.
+``Reed-Solomon Codes.'' Accessed April 17, 2017.\\ https://www.cs.cmu.edu/$\sim$guyb/realworld/reedsolomon/reed\_solomon\_codes.html.
+
+\bibitem[W]{codesandcurves}
+Judy L. Walker.
+\textit{Codes and Curves}. Providence, RI: American Mathematical Society, 2002.
+
+\end{thebibliography}
+
+\end{document}
